@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Товари — Magazine Shoes{% endblock %}
+{% block content %}
+<h1>Рейтинг товарів</h1>
+
+<div class="panel-row">
+  <div class="panel">
+    <div class="panel-title">Топ-5 за прибутком</div>
+    {% for p in top_profit %}
+    <div class="bar-row">
+      <div class="bar-top"><span class="bar-label">{{ p.model }}</span><span class="pos">{{ "%.0f"|format(p.total_profit) }} ₴</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:{{ p.width_pct }}%;background:var(--good)"></div></div>
+    </div>
+    {% else %}<p class="muted">Немає даних</p>{% endfor %}
+  </div>
+  <div class="panel">
+    <div class="panel-title">Топ-5 за викупом (мін. 10 замовлень)</div>
+    {% for p in top_buyout %}
+    <div class="bar-row">
+      <div class="bar-top"><span class="bar-label">{{ p.model }}</span><span style="color:var(--accent)">{{ p.buyout_rate }}%</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:{{ p.width_pct }}%;background:var(--accent)"></div></div>
+    </div>
+    {% else %}<p class="muted">Немає даних</p>{% endfor %}
+  </div>
+  <div class="panel">
+    <div class="panel-title">Аутсайдери (від'ємний прибуток)</div>
+    {% for p in worst_profit %}
+    <div class="bar-row">
+      <div class="bar-top"><span class="bar-label">{{ p.model }}</span><span class="neg">{{ "%.0f"|format(p.total_profit) }} ₴</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:{{ p.width_pct }}%;background:var(--bad)"></div></div>
+    </div>
+    {% else %}<p class="muted">Немає збиткових товарів 🎉</p>{% endfor %}
+  </div>
+</div>
+
+<h2>Усі товари · сортування: {{ sort }} ({{ order }})</h2>
+<table>
+  <tr>
+    <th><a class="pagelink" href="{{ url_for('products_view', sort='model', order='asc') }}">Модель</a></th>
+    <th><a class="pagelink" href="{{ url_for('products_view', sort='orders_total', order='desc') }}">Всього</a></th>
+    <th><a class="pagelink" href="{{ url_for('products_view', sort='orders_success', order='desc') }}">Продано</a></th>
+    <th><a class="pagelink" href="{{ url_for('products_view', sort='orders_refused', order='desc') }}">Відмов</a></th>
+    <th><a class="pagelink" href="{{ url_for('products_view', sort='buyout_rate', order='desc') }}">Викуп %</a></th>
+    <th><a class="pagelink" href="{{ url_for('products_view', sort='total_profit', order='desc') }}">Прибуток</a></th>
+    <th><a class="pagelink" href="{{ url_for('products_view', sort='avg_profit_per_sale', order='desc') }}">Сер. прибуток/продаж</a></th>
+  </tr>
+  {% for p in products %}
+  <tr>
+    <td>{{ p.model }}</td>
+    <td>{{ p.orders_total }}</td>
+    <td>{{ p.orders_success }}</td>
+    <td>{{ p.orders_refused }}</td>
+    <td>{{ p.buyout_rate if p.buyout_rate == p.buyout_rate else "—" }}</td>
+    <td class="{{ 'pos' if p.total_profit >= 0 else 'neg' }}">{{ "%.0f"|format(p.total_profit) }}</td>
+    <td>{{ "%.0f"|format(p.avg_profit_per_sale) if p.avg_profit_per_sale == p.avg_profit_per_sale else "—" }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

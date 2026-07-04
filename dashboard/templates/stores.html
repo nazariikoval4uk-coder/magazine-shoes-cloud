@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Магазини — Magazine Shoes{% endblock %}
+{% block content %}
+<h1>Магазини</h1>
+<p class="muted">період {{ date_from }} — {{ date_to }}</p>
+
+<div class="pill-row">
+  {% for p, label in [("month","Цей місяць"), ("3m","3 міс"), ("6m","6 міс"), ("year","Цей рік"), ("all","Весь час")] %}
+  <a class="pill {{ 'active' if period == p }}" href="{{ url_for('stores_view', period=p, shop=selected_shops) }}">{{ label }}</a>
+  {% endfor %}
+</div>
+
+<div class="store-grid">
+  {% for s in stores %}
+  <div class="store-card" style="--store-color:{{ shop_colors.get(s.shop, '#7c7e9a') }}">
+    <div class="store-name">{{ s.shop }}</div>
+    <div class="store-stats">
+      <div class="store-stat"><div class="ssl">Маржа</div><div class="ssv {{ 'pos' if s.total_margin >= 0 else 'neg' }}">{{ "%.0f"|format(s.total_margin) }} ₴</div></div>
+      <div class="store-stat"><div class="ssl">Сер.маржа</div><div class="ssv">{{ "%.0f"|format(s.avg_margin) }} ₴</div></div>
+      <div class="store-stat"><div class="ssl">% Викупу</div><div class="ssv">{{ s.buyout_rate if s.buyout_rate is not none else "—" }}%</div></div>
+      <div class="store-stat"><div class="ssl">Всього</div><div class="ssv">{{ s.total|int }}</div></div>
+      <div class="store-stat"><div class="ssl">Успішні</div><div class="ssv pos">{{ s.success|int }}</div></div>
+      <div class="store-stat"><div class="ssl">Відмови</div><div class="ssv neg">{{ s.refused|int }}</div></div>
+      <div class="store-stat"><div class="ssl">Рез.відмов</div><div class="ssv neg">{{ "%.0f"|format(s.lost_margin_refused) }} ₴</div></div>
+      <div class="store-stat"><div class="ssl">В дорозі</div><div class="ssv">{{ s.pending|int }}</div></div>
+      <div class="store-stat"><div class="ssl">Сплачено (відм.)</div><div class="ssv neg">{{ "%.0f"|format(s.refusal_cost_total) }} ₴</div></div>
+    </div>
+    <p style="margin-top:12px"><a class="pagelink" href="{{ url_for('shop_detail', name=s.shop) }}">Деталі по місяцях і товарах &rarr;</a></p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

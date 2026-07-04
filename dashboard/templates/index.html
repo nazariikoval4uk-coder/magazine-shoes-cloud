@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Загальний дашборд — Magazine Shoes{% endblock %}
+{% block content %}
+<h1>Загальний дашборд</h1>
+<p class="muted">Всього замовлень в базі: {{ total_orders }} · період {{ date_from }} — {{ date_to }}</p>
+
+<div class="pill-row">
+  {% for p, label in [("month","Цей місяць"), ("3m","3 міс"), ("6m","6 міс"), ("year","Цей рік"), ("all","Весь час")] %}
+  <a class="pill {{ 'active' if period == p }}" href="{{ url_for('index', period=p, shop=selected_shops) }}">{{ label }}</a>
+  {% endfor %}
+</div>
+
+<form class="filters" method="get">
+  {% for s in selected_shops %}<input type="hidden" name="shop" value="{{ s }}">{% endfor %}
+  <input type="hidden" name="period" value="custom">
+  <div><label>Від</label><input type="date" name="date_from" value="{{ date_from }}"></div>
+  <div><label>До</label><input type="date" name="date_to" value="{{ date_to }}"></div>
+  <div><button type="submit">Застосувати діапазон</button></div>
+</form>
+
+<div class="pill-row">
+  {% for s in all_shops %}
+    {% set new_shops = selected_shops[:] %}
+    {% if s in selected_shops %}
+      {% set _ = new_shops.remove(s) %}
+    {% else %}
+      {% set _ = new_shops.append(s) %}
+    {% endif %}
+    <a class="pill shop-{{ s }} {{ 'active' if s in selected_shops }}"
+       href="{{ url_for('index', period=period, date_from=date_from, date_to=date_to, shop=new_shops) }}">{{ s }}</a>
+  {% endfor %}
+</div>
+
+<div class="cards">
+  <div class="card" style="--card-accent:{{ kpi_colors.total }}">
+    <div class="label">Всього</div>
+    <div class="value">{{ kpi.total }}</div>
+    <div class="sub">за обраний період</div>
+  </div>
+  <div class="card" style="--card-accent:{{ kpi_colors.success }}">
+    <div class="label">Успішних</div>
+    <div class="value">{{ kpi.success }}</div>
+    <div class="sub">{{ kpi.buyout_rate if kpi.buyout_rate is not none else "—" }}% викупу</div>
+  </div>
+  <div class="card" style="--card-accent:{{ kpi_colors.refused }}">
+    <div class="label">Відмов</div>
+    <div class="value">{{ kpi.refused }}</div>
+    <div class="sub">рез: {{ "%.0f"|format(kpi.lost_margin_refused) }} ₴</div>
+  </div>
+  <div class="card" style="--card-accent:{{ kpi_colors.pending }}">
+    <div class="label">В дорозі</div>
+    <div class="value">{{ kpi.pending }}</div>
+  </div>
+  <div class="card" style="--card-accent:{{ kpi_colors.margin }}">
+    <div class="label">Загальна маржа</div>
+    <div class="value">{{ "%.0f"|format(kpi.total_margin) }} ₴</div>
+    <div class="sub">успішних</div>
+  </div>
+  <div class="card" style="--card-accent:{{ kpi_colors.avg_margin }}">
+    <div class="label">Середня маржа</div>
+    <div class="value">{{ "%.0f"|format(kpi.avg_margin) }} ₴</div>
+    <div class="sub">на замовлення</div>
+  </div>
+  <div class="card" style="--card-accent:{{ kpi_colors.lost }}">
+    <div class="label">Упущено (відмови)</div>
+    <div class="value">{{ "%.0f"|format(kpi.lost_margin_refused) }} ₴</div>
+    <div class="sub">гіпотетично, не реальні кошти</div>
+  </div>
+  <div class="card" style="--card-accent:{{ kpi_colors.refused }}">
+    <div class="label">Реально сплачено (відмови)</div>
+    <div class="value">{{ "%.0f"|format(kpi.refusal_cost_total) }} ₴</div>
+    <div class="sub">ціна повернення посилки, справжні кошти</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">Маржа по місяцях (за період)</div>
+  <div class="mc-wrap">
+    <div class="mc-yaxis">
+      {% for tick in chart.y_ticks %}<div>{{ tick }}</div>{% endfor %}
+    </div>
+    <div class="mc">
+      {% for col in chart.columns %}
+      <div class="mcc">
+        <div class="mcv">{{ col.total_label }}</div>
+        <div class="mcstack" style="height:{{ col.total_height_px }}px">
+          {% for seg in col.segments %}
+          <div class="mcb" style="height:{{ seg.height_px }}px;background:{{ seg.color }}" title="{{ seg.shop }}: {{ '%.0f'|format(seg.value) }} ₴"></div>
+          {% endfor %}
+        </div>
+        <div class="mcl">{{ col.month_short }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="mc-legend">
+    {% for s in selected_shops %}
+    <span style="color:{{ shop_colors.get(s, '#7c7e9a') }}">■ {{ s }}</span>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="panel-row">
+  <div class="panel">
+    <div class="panel-title">По магазинах (маржа)</div>
+    {% for row in breakdown %}
+    <div class="bar-row">
+      <div class="bar-top">
+        <span class="bar-label">{{ row.shop }}</span>
+        <span style="color:{{ shop_colors.get(row.shop, '#7c7e9a') }}">{{ "%.0f"|format(row.total_margin) }} ₴</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:{{ row.margin_width_pct }}%;background:{{ shop_colors.get(row.shop, '#7c7e9a') }}"></div></div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="panel">
+    <div class="panel-title">% Викупу</div>
+    {% for row in breakdown %}
+    <div class="bar-row">
+      <div class="bar-top">
+        <span class="bar-label">{{ row.shop }}</span>
+        <span style="color:{{ shop_colors.get(row.shop, '#7c7e9a') }}">{{ row.buyout_rate if row.buyout_rate is not none else "—" }}%</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:{{ row.buyout_rate or 0 }}%;background:{{ shop_colors.get(row.shop, '#7c7e9a') }}"></div></div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="panel">
+    <div class="panel-title">Упущено через відмови</div>
+    {% for row in breakdown %}
+    <div class="bar-row">
+      <div class="bar-top">
+        <span class="bar-label">{{ row.shop }}</span>
+        <span class="neg">{{ "%.0f"|format(row.lost_margin_refused) }} ₴</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:{{ row.lost_width_pct }}%;background:var(--bad)"></div></div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">Інсайти</div>
+  {% for i in insights %}
+  <div class="insight {{ i.type }}">
+    <span class="ico">{{ "⚠️" if i.type == "warn" else "🏆" if i.type == "success" else "📊" }}</span>
+    <span>{{ i.text }}</span>
+  </div>
+  {% else %}
+  <p class="muted">Немає особливих сигналів за цей період.</p>
+  {% endfor %}
+</div>
+{% endblock %}

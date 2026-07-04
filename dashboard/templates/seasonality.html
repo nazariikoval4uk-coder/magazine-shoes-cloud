@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Сезонність — Magazine Shoes{% endblock %}
+{% block content %}
+<h1>Сезонність попиту</h1>
+<p class="muted">По календарних місяцях, агреговано по всіх роках. Дані охоплюють неповні 2-3 роки — орієнтир, не точна статистика.</p>
+
+<div class="cards">
+  <div class="card" style="--card-accent:#22d3a0">
+    <div class="label">Найсильніший місяць</div>
+    <div class="value">{{ best_month.month_name }}</div>
+    <div class="sub">{{ "%.0f"|format(best_month.avg_profit_per_year) }} ₴/рік у середньому</div>
+  </div>
+  <div class="card" style="--card-accent:#ff5c5c">
+    <div class="label">Найслабший місяць</div>
+    <div class="value">{{ worst_month.month_name }}</div>
+    <div class="sub">{{ "%.0f"|format(worst_month.avg_profit_per_year) }} ₴/рік у середньому</div>
+  </div>
+</div>
+
+<h2>По місяцях</h2>
+<table>
+  <tr>
+    <th>Місяць</th><th>Років даних</th><th>Замовлень</th><th>Викуп %</th><th>Сер. прибуток/рік</th>
+  </tr>
+  {% for row in summary %}
+  <tr>
+    <td>{{ row.month_name }}</td>
+    <td>{{ row.years_covered }}</td>
+    <td>{{ row.orders_total }}</td>
+    <td>{{ row.buyout_rate if row.buyout_rate == row.buyout_rate else "—" }}</td>
+    <td class="{{ 'pos' if row.avg_profit_per_year >= 0 else 'neg' }}">{{ "%.0f"|format(row.avg_profit_per_year) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2 style="margin-top:28px">Топ-3 товари по місяцях (для планування закупівель)</h2>
+<table>
+  <tr><th>Місяць</th><th>Модель</th><th>Прибуток</th></tr>
+  {% for p in top_products %}
+  <tr>
+    <td>{{ p.month_name }}</td>
+    <td>{{ p.model }}</td>
+    <td class="{{ 'pos' if p.total_profit >= 0 else 'neg' }}">{{ "%.0f"|format(p.total_profit) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Когорти — Magazine Shoes{% endblock %}
+{% block content %}
+<h1>Когортний аналіз утримання</h1>
+<p class="muted">
+  Клієнти згруповані за місяцем першої покупки (когорта). Кожна колонка m0..m12 —
+  % когорти, що зробив ще одну покупку через стільки місяців після першої.
+</p>
+
+<div class="cards">
+  <div class="card" style="--card-accent:#6c63ff">
+    <div class="label">Клієнтів у когортах</div>
+    <div class="value">{{ total_clients }}</div>
+  </div>
+  <div class="card" style="--card-accent:#fbbf24">
+    <div class="label">Сер. повернення через 1 міс</div>
+    <div class="value">{{ "%.1f"|format(avg_m1) if avg_m1 == avg_m1 else "—" }}%</div>
+  </div>
+  <div class="card" style="--card-accent:#ff5c5c">
+    <div class="label">Сер. повернення через 3 міс</div>
+    <div class="value">{{ "%.1f"|format(avg_m3) if avg_m3 == avg_m3 else "—" }}%</div>
+  </div>
+</div>
+
+<h2>Матриця когорт</h2>
+<table>
+  <tr>
+    <th>Когорта</th><th>Клієнтів</th>
+    {% for col in offset_cols %}<th>{{ col }}</th>{% endfor %}
+  </tr>
+  {% for row in cohorts %}
+  <tr>
+    <td>{{ row.cohort_month }}</td>
+    <td>{{ row.cohort_size }}</td>
+    {% for col in offset_cols %}
+    <td>{{ "%.1f"|format(row[col]) if row[col] == row[col] else "" }}</td>
+    {% endfor %}
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

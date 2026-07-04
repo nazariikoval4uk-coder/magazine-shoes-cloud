@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Тренд — Magazine Shoes{% endblock %}
+{% block content %}
+<h1>Тренд викупу і прибутку (всі магазини разом)</h1>
+<p class="muted">Падіння викупу % місяць до місяця — ранній сигнал проблеми (гірші ліди, кур'єр, довіра).</p>
+
+{% if headline %}
+<div class="cards">
+  <div class="card" style="--card-accent:#6c63ff">
+    <div class="label">Останній повний місяць</div>
+    <div class="value">{{ headline.month }}</div>
+  </div>
+  <div class="card" style="--card-accent:#22d3a0">
+    <div class="label">Прибуток</div>
+    <div class="value">{{ "%.0f"|format(headline.profit) }} ₴</div>
+    <div class="sub {{ 'pos' if headline.profit_delta > 0 else 'neg' if headline.profit_delta < 0 else '' }}">
+      {% if headline.profit_delta == headline.profit_delta %}{{ "%+.0f"|format(headline.profit_delta) }} до попереднього{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="card" style="--card-accent:#60a5fa">
+    <div class="label">Викуп %</div>
+    <div class="value">{{ headline.buyout_rate if headline.buyout_rate == headline.buyout_rate else "—" }}%</div>
+    <div class="sub {{ 'pos' if headline.buyout_rate_delta > 0 else 'neg' if headline.buyout_rate_delta < 0 else '' }}">
+      {% if headline.buyout_rate_delta == headline.buyout_rate_delta %}{{ "%+.1f"|format(headline.buyout_rate_delta) }} до попереднього{% else %}—{% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<h2>По місяцях</h2>
+<table>
+  <tr>
+    <th>Місяць</th><th>Замовлень</th><th>Успішно</th><th>Відмова</th><th>В процесі</th>
+    <th>Викуп %</th><th>Зміна викупу</th><th>Прибуток</th><th>Зміна прибутку</th>
+  </tr>
+  {% for row in trend %}
+  <tr>
+    <td>{{ row.month }}{% if row.month == latest_month %} <span class="muted">(неповний)</span>{% endif %}</td>
+    <td>{{ row.orders_total }}</td>
+    <td>{{ row.orders_success }}</td>
+    <td>{{ row.orders_refused }}</td>
+    <td>{{ row.orders_pending }}</td>
+    <td>{{ row.buyout_rate if row.buyout_rate == row.buyout_rate else "—" }}</td>
+    <td class="{{ 'pos' if row.buyout_rate_delta > 0 else 'neg' if row.buyout_rate_delta < 0 else '' }}">
+      {% if row.buyout_rate_delta == row.buyout_rate_delta %}{{ "%+.1f"|format(row.buyout_rate_delta) }}{% else %}—{% endif %}
+    </td>
+    <td class="{{ 'pos' if row.profit >= 0 else 'neg' }}">{{ "%.0f"|format(row.profit) }}</td>
+    <td class="{{ 'pos' if row.profit_delta > 0 else 'neg' if row.profit_delta < 0 else '' }}">
+      {% if row.profit_delta == row.profit_delta %}{{ "%+.0f"|format(row.profit_delta) }}{% else %}—{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

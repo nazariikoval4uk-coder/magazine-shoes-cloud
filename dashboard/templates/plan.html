@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}План/факт — Magazine Shoes{% endblock %}
+{% block content %}
+<h1>Місячний дашборд: план/факт</h1>
+<p class="muted">Чистий прибуток по всіх магазинах порівняно з планом ({{ "data/manual/plan.csv" }}).</p>
+
+{% if latest_total %}
+<h2>Разом за {{ latest_month }}</h2>
+<div class="cards">
+  <div class="card">
+    <div class="label">План</div>
+    <div class="value">{{ "%.0f"|format(latest_total.planned_profit) }} грн</div>
+  </div>
+  <div class="card">
+    <div class="label">Факт</div>
+    <div class="value {{ 'pos' if latest_total.fact_profit >= 0 else 'neg' }}">{{ "%.0f"|format(latest_total.fact_profit) }} грн</div>
+  </div>
+  <div class="card">
+    <div class="label">Відхилення</div>
+    <div class="value {{ 'pos' if latest_total.variance >= 0 else 'neg' }}">{{ "%.0f"|format(latest_total.variance) }} грн</div>
+  </div>
+  <div class="card">
+    <div class="label">Виконання</div>
+    <div class="value">{{ latest_total.completion_pct if latest_total.completion_pct == latest_total.completion_pct else "—" }}%</div>
+  </div>
+</div>
+{% else %}
+<p class="muted">Немає даних за останній місяць.</p>
+{% endif %}
+
+<h2>По місяцях (усі магазини разом)</h2>
+<table>
+  <tr>
+    <th>Місяць</th><th>План</th><th>Факт</th><th>Відхилення</th><th>Виконання %</th>
+  </tr>
+  {% for row in totals %}
+  <tr>
+    <td>{{ row.month }}</td>
+    <td>{{ "%.0f"|format(row.planned_profit) }}</td>
+    <td class="{{ 'pos' if row.fact_profit >= 0 else 'neg' }}">{{ "%.0f"|format(row.fact_profit) }}</td>
+    <td class="{{ 'pos' if row.variance >= 0 else 'neg' }}">{{ "%.0f"|format(row.variance) }}</td>
+    <td>{{ row.completion_pct if row.completion_pct == row.completion_pct else "—" }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5" class="muted">Немає даних плану.</td></tr>
+  {% endfor %}
+</table>
+
+<h2>По магазинах</h2>
+<form class="filters" method="get">
+  <div>
+    <label for="month">Місяць</label>
+    <select id="month" name="month" onchange="this.form.submit()">
+      <option value="">Всі місяці</option>
+      {% for m in months %}
+      <option value="{{ m }}" {{ "selected" if m == month }}>{{ m }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</form>
+<table>
+  <tr>
+    <th>Місяць</th><th>Магазин</th><th>План</th><th>Факт</th><th>Відхилення</th><th>Виконання %</th>
+  </tr>
+  {% for row in rows %}
+  <tr>
+    <td>{{ row.month }}</td>
+    <td><a class="pagelink" href="{{ url_for('shop_detail', name=row.shop) }}">{{ row.shop }}</a></td>
+    <td>{{ "%.0f"|format(row.planned_profit) }}</td>
+    <td class="{{ 'pos' if row.fact_profit >= 0 else 'neg' }}">{{ "%.0f"|format(row.fact_profit) }}</td>
+    <td class="{{ 'pos' if row.variance >= 0 else 'neg' }}">{{ "%.0f"|format(row.variance) }}</td>
+    <td>{{ row.completion_pct if row.completion_pct == row.completion_pct else "—" }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6" class="muted">Немає даних.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

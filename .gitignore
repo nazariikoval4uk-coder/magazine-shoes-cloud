@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+dashboard/instance/
+data/raw/*.xls
+data/processed/*.csv
+!data/processed/.gitkeep

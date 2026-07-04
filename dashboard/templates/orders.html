@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Замовлення — Magazine Shoes{% endblock %}
+{% block content %}
+<h1>Список замовлень</h1>
+<p class="muted">Знайдено: {{ total }} · сторінка {{ page }}</p>
+
+<div class="cards">
+  <div class="card" style="--card-accent:#6c63ff">
+    <div class="label">Всього (за фільтром)</div>
+    <div class="value">{{ kpi.total }}</div>
+  </div>
+  <div class="card" style="--card-accent:#22d3a0">
+    <div class="label">Успішно</div>
+    <div class="value">{{ kpi.success }}</div>
+    <div class="sub">{{ kpi.buyout_rate if kpi.buyout_rate is not none else "—" }}% викупу</div>
+  </div>
+  <div class="card" style="--card-accent:#ff5c5c">
+    <div class="label">Відмов</div>
+    <div class="value">{{ kpi.refused }}</div>
+  </div>
+  <div class="card" style="--card-accent:#fbbf24">
+    <div class="label">В процесі</div>
+    <div class="value">{{ kpi.pending }}</div>
+  </div>
+  <div class="card" style="--card-accent:#22d3a0">
+    <div class="label">Маржа (успішних)</div>
+    <div class="value">{{ "%.0f"|format(kpi.total_margin) }} ₴</div>
+  </div>
+</div>
+
+<form class="filters" method="get">
+  <div>
+    <label>Магазин</label>
+    <select name="shop">
+      <option value="">Всі</option>
+      {% for s in shops %}<option value="{{ s }}" {{ "selected" if s == shop }}>{{ s }}</option>{% endfor %}
+    </select>
+  </div>
+  <div>
+    <label>Статус</label>
+    <select name="outcome">
+      <option value="">Всі</option>
+      <option value="success" {{ "selected" if outcome == "success" }}>Успішно</option>
+      <option value="refused" {{ "selected" if outcome == "refused" }}>Відмова</option>
+      <option value="pending" {{ "selected" if outcome == "pending" }}>В процесі</option>
+    </select>
+  </div>
+  <div>
+    <label>Місяць</label>
+    <select name="month">
+      <option value="">Всі</option>
+      {% for m in months %}<option value="{{ m }}" {{ "selected" if m == month }}>{{ m }}</option>{% endfor %}
+    </select>
+  </div>
+  <div><label>Від</label><input type="date" name="date_from" value="{{ date_from }}"></div>
+  <div><label>До</label><input type="date" name="date_to" value="{{ date_to }}"></div>
+  <div>
+    <label>Пошук (ім'я/телефон/модель)</label>
+    <input type="text" name="q" value="{{ q }}">
+  </div>
+  <div><button type="submit">Фільтрувати</button></div>
+</form>
+
+<table>
+  <tr>
+    <th>Дата</th><th>Клієнт</th><th>Телефон</th><th>Магазин</th><th>Модель</th>
+    <th>Ціна</th><th>Маржа</th><th>Статус ТТН</th><th>Результат</th><th>Залишок (відмова)</th>
+  </tr>
+  {% for o in orders %}
+  <tr>
+    <td>{{ o.date }}</td>
+    <td>{{ (o.first_name or "") ~ " " ~ (o.last_name or "") }}</td>
+    <td>{{ o.phone }}</td>
+    <td>{{ o.shop }}</td>
+    <td>{{ o.model }}</td>
+    <td>{{ o.cost_price }}</td>
+    <td>{{ o.margin }}</td>
+    <td>{{ o.ttn_status }}</td>
+    <td><span class="badge {{ o.outcome }}">{{ o.outcome }}</span></td>
+    <td class="{{ 'pos' if o.refusal_remainder is not none and o.refusal_remainder == o.refusal_remainder and o.refusal_remainder >= 0 else 'neg' if o.refusal_remainder == o.refusal_remainder else '' }}">
+      {{ "%.1f"|format(o.refusal_remainder) if o.refusal_remainder == o.refusal_remainder else "" }}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<p>
+  {% if page > 1 %}
+    <a class="pagelink" href="{{ url_for('orders_view', shop=shop, outcome=outcome, month=month, date_from=date_from, date_to=date_to, q=q, page=page-1) }}">&larr; попередня</a>
+  {% endif %}
+  {% if has_next %}
+    <a class="pagelink" href="{{ url_for('orders_view', shop=shop, outcome=outcome, month=month, date_from=date_from, date_to=date_to, q=q, page=page+1) }}">наступна &rarr;</a>
+  {% endif %}
+</p>
+{% endblock %}

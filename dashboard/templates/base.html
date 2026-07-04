@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>{% block title %}Magazine Shoes{% endblock %}</title>
+<style>
+  :root {
+    --bg: #0b0c10; --surface: #13141a; --card: #1a1b24; --border: #252633; --border2: #2e3045;
+    --text: #e2e4f0; --muted: #7c7e9a;
+    --good: #22d3a0; --bad: #ff5c5c; --warn: #fbbf24; --accent: #6c63ff; --blue: #60a5fa; --pink: #f472b6;
+    --shop-best: #60a5fa; --shop-bunnix: #f472b6; --shop-olx: #f59e0b;
+    --shop-prom: #34d399; --shop-unknown: #7c7e9a;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; margin: 0; color: var(--text); background: var(--bg); font-size: 13px; }
+  nav { background: var(--surface); padding: 12px 20px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+  nav a { color: var(--muted); text-decoration: none; font-size: 13px; padding-bottom: 4px; border-bottom: 2px solid transparent; }
+  nav a.active, nav a:hover { color: var(--text); font-weight: 600; border-bottom-color: var(--accent); }
+  nav .brand { color: var(--text); font-weight: 900; margin-right: 12px; letter-spacing: 1px; }
+  main { padding: 20px; max-width: 1300px; margin: 0 auto; }
+  h1 { font-size: 22px; margin-bottom: 4px; color: var(--text); }
+  h2 { font-size: 12px; margin-top: 28px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; }
+  table { border-collapse: collapse; width: 100%; background: var(--card); margin-top: 8px; font-size: 12.5px; border: 1px solid var(--border); }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+  th { background: var(--surface); position: sticky; top: 0; color: var(--muted); font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.3px; }
+  tr:hover td { background: rgba(108,99,255,0.05); }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; position: relative; overflow: hidden; }
+  .card::after { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--card-accent, var(--accent)); }
+  .card .label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 7px; }
+  .card .value { font-size: 21px; font-weight: 800; color: var(--card-accent, var(--text)); line-height: 1; }
+  .card .sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  .pos { color: var(--good); }
+  .neg { color: var(--bad); }
+  .badge { display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+  .badge.success { background: rgba(34,211,160,0.12); color: var(--good); }
+  .badge.refused { background: rgba(255,92,92,0.12); color: var(--bad); }
+  .badge.pending { background: rgba(251,191,36,0.12); color: var(--warn); }
+  .badge.risk { background: rgba(255,92,92,0.12); color: var(--bad); }
+
+  form.filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; margin: 12px 0; }
+  form.filters label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 3px; }
+  form.filters input, form.filters select {
+    padding: 6px 10px; background: var(--surface); border: 1px solid var(--border2); color: var(--text); border-radius: 6px; font-size: 12px;
+  }
+  form.filters button {
+    background: rgba(108,99,255,0.15); border: 1px solid var(--accent); color: var(--accent);
+    border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .muted { color: var(--muted); font-size: 11px; }
+  a.pagelink { color: var(--accent); text-decoration: none; }
+
+  .pill-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
+  .pill {
+    display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    background: transparent; color: var(--muted); border: 1px solid var(--border2); text-decoration: none; cursor: pointer; opacity: .6;
+  }
+  .pill.active { opacity: 1; background: var(--accent); color: #fff; border-color: var(--accent); }
+  .pill.shop-Best.active { background: var(--shop-best); border-color: var(--shop-best); }
+  .pill.shop-Bunnix.active { background: var(--shop-bunnix); border-color: var(--shop-bunnix); }
+  .pill.shop-ОЛХ.active { background: var(--shop-olx); border-color: var(--shop-olx); }
+  .pill.shop-Пром.active { background: var(--shop-prom); border-color: var(--shop-prom); }
+
+  .panel-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-top: 12px; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .panel-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 12px; }
+  @media (max-width: 900px) { .panel-row, .panel-grid { grid-template-columns: 1fr; } }
+  .panel-title { font-size: 9px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+
+  .store-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  @media (max-width: 900px) { .store-grid { grid-template-columns: 1fr; } }
+  .store-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; position: relative; overflow: hidden; }
+  .store-card::after { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--store-color, var(--accent)); }
+  .store-name { font-size: 15px; font-weight: 800; margin-bottom: 14px; color: var(--store-color, var(--text)); }
+  .store-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--border); border-radius: 8px; overflow: hidden; }
+  .store-stat { background: var(--card); padding: 10px 12px; }
+  .store-stat .ssl { font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+  .store-stat .ssv { font-size: 15px; font-weight: 800; }
+
+  /* hand-drawn CSS bar chart (стовпчики місяців) */
+  .mc-wrap { display: flex; gap: 8px; }
+  .mc-yaxis { flex-shrink: 0; width: 40px; display: flex; flex-direction: column; justify-content: space-between; height: 160px; padding-top: 10px; font-size: 9px; color: var(--muted); text-align: right; }
+  .mc { display: flex; align-items: flex-end; gap: 10px; height: 200px; padding: 10px 4px 24px; overflow-x: auto; border-radius: 8px; flex: 1; border-left: 1px solid var(--border); }
+  .mcc { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 0 0 auto; width: 38px; height: 100%; justify-content: flex-end; }
+  .mcstack { display: flex; flex-direction: column-reverse; width: 80%; border-radius: 3px 3px 0 0; overflow: hidden; }
+  .mcb { width: 100%; min-height: 1px; }
+  .mcl { font-size: 9px; color: var(--muted); margin-top: 5px; font-weight: 600; white-space: nowrap; }
+  .mcv { font-size: 8px; color: var(--text); font-weight: 700; margin-bottom: 2px; white-space: nowrap; }
+  .mc-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; font-size: 11px; font-weight: 600; }
+
+  .bar-row { margin: 11px 0; font-size: 12px; }
+  .bar-row .bar-top { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .bar-row .bar-label { font-weight: 700; }
+  .bar-row .bar-track { width: 100%; background: var(--border); border-radius: 4px; height: 12px; overflow: hidden; }
+  .bar-row .bar-fill { height: 100%; border-radius: 4px; min-width: 3px; }
+
+  .insight { display: flex; gap: 9px; background: rgba(251,191,36,0.05); border: 1px solid rgba(251,191,36,0.15); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; font-size: 12px; line-height: 1.5; }
+  .insight .ico { flex-shrink: 0; }
+  .insight.success { background: rgba(34,211,160,0.05); border-color: rgba(34,211,160,0.15); }
+  .insight.info { background: rgba(108,99,255,0.05); border-color: rgba(108,99,255,0.15); }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">👟 MAGAZINE SHOES</span>
+  <a href="{{ url_for('upload_view') }}" class="{{ 'active' if request.endpoint == 'upload_view' }}">Новий XLS</a>
+  <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' }}">Загальний</a>
+  <a href="{{ url_for('stores_view') }}" class="{{ 'active' if request.endpoint in ['stores_view', 'shop_detail'] }}">Магазини</a>
+  <a href="{{ url_for('plan_view') }}" class="{{ 'active' if request.endpoint == 'plan_view' }}">План/факт</a>
+  <a href="{{ url_for('trends_view') }}" class="{{ 'active' if request.endpoint == 'trends_view' }}">Тренд</a>
+  <a href="{{ url_for('seasonality_view') }}" class="{{ 'active' if request.endpoint == 'seasonality_view' }}">Сезонність</a>
+  <a href="{{ url_for('cohorts_view') }}" class="{{ 'active' if request.endpoint == 'cohorts_view' }}">Когорти</a>
+  <a href="{{ url_for('orders_view') }}" class="{{ 'active' if request.endpoint == 'orders_view' }}">Замовлення</a>
+  <a href="{{ url_for('refusals_view') }}" class="{{ 'active' if request.endpoint == 'refusals_view' }}">Відмови</a>
+  <a href="{{ url_for('products_view') }}" class="{{ 'active' if request.endpoint == 'products_view' }}">Товари</a>
+  <a href="{{ url_for('suppliers_view') }}" class="{{ 'active' if request.endpoint == 'suppliers_view' }}">Постачальники</a>
+  <a href="{{ url_for('clients_view') }}" class="{{ 'active' if request.endpoint == 'clients_view' }}">Клієнти</a>
+  <a href="{{ url_for('wishlist_view') }}" class="{{ 'active' if request.endpoint == 'wishlist_view' }}">Wishlist</a>
+  <a href="{{ url_for('expenses_view') }}" class="{{ 'active' if request.endpoint == 'expenses_view' }}">Витрати</a>
+  <a href="{{ url_for('logout_view') }}" style="margin-left:auto">Вийти</a>
+</nav>
+<main>
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>

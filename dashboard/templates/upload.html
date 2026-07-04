@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Завантажити вивантаження — Magazine Shoes{% endblock %}
+{% block content %}
+<h1>Завантажити нове вивантаження з CRM</h1>
+<p class="muted">Оберіть .xls-файл, який вивантажили з EasyDrop — система сама додасть нові замовлення й оновить статуси наявних.</p>
+
+<form method="post" enctype="multipart/form-data" class="filters">
+  <div><input type="file" name="xls_file" accept=".xls" required></div>
+  <div><button type="submit">Завантажити й імпортувати</button></div>
+</form>
+
+{% if error %}
+<p class="neg">{{ error }}</p>
+{% endif %}
+
+{% if result %}
+<h2>Результат імпорту</h2>
+<div class="cards">
+  <div class="card">
+    <div class="label">Нових замовлень</div>
+    <div class="value pos">{{ result.added }}</div>
+  </div>
+  <div class="card">
+    <div class="label">Оновлено</div>
+    <div class="value">{{ result.updated }}</div>
+  </div>
+  <div class="card">
+    <div class="label">Без змін</div>
+    <div class="value muted">{{ result.unchanged }}</div>
+  </div>
+  <div class="card">
+    <div class="label">Всього в базі</div>
+    <div class="value">{{ result.total }}</div>
+  </div>
+</div>
+<p class="muted">Файл: {{ result.file_name }}</p>
+<p><a class="pagelink" href="{{ url_for('index') }}">Перейти до дашборду &rarr;</a></p>
+{% endif %}
+{% endblock %}

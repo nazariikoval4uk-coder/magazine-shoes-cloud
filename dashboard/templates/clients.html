@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Клієнти — Magazine Shoes{% endblock %}
+{% block content %}
+<h1>Клієнти</h1>
+
+<div class="cards">
+  {% for seg, count in segment_counts.items() %}
+  <div class="card" style="--card-accent:{{ segment_colors.get(seg, '#7c7e9a') }}">
+    <div class="label">{{ seg }}</div>
+    <div class="value">{{ count }}</div>
+  </div>
+  {% endfor %}
+  <div class="card" style="--card-accent:#6c63ff">
+    <div class="label">VIP</div>
+    <div class="value">{{ vip_count }}</div>
+  </div>
+  <div class="card" style="--card-accent:#ff5c5c">
+    <div class="label">У ризику відтоку</div>
+    <div class="value neg">{{ risk_count }}</div>
+  </div>
+</div>
+
+<form class="filters" method="get">
+  <div>
+    <label>Сегмент</label>
+    <select name="segment">
+      <option value="">Всі</option>
+      {% for seg in segment_counts.keys() %}
+      <option value="{{ seg }}" {{ "selected" if seg == segment }}>{{ seg }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label>Heat Score від</label>
+    <input type="number" name="heat_min" value="{{ heat_min }}" min="0" max="100" style="width:70px">
+  </div>
+  <div>
+    <label>Heat Score до</label>
+    <input type="number" name="heat_max" value="{{ heat_max }}" min="0" max="100" style="width:70px">
+  </div>
+  <div>
+    <label>Мін. успішних замовлень</label>
+    <input type="number" name="min_orders" value="{{ min_orders }}" min="0" style="width:70px">
+  </div>
+  <div>
+    <label>Мін. LTV (грн)</label>
+    <input type="number" name="min_ltv" value="{{ min_ltv }}" style="width:90px">
+  </div>
+  <div>
+    <label>Бренд</label>
+    <select name="brand">
+      <option value="">Всі</option>
+      {% for b in brands %}
+      <option value="{{ b }}" {{ "selected" if b == brand }}>{{ b }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label>Не купував з</label>
+    <input type="date" name="not_bought_since" value="{{ not_bought_since }}">
+  </div>
+  <div>
+    <label><input type="checkbox" name="vip_only" value="1" {{ "checked" if vip_only }}> лише VIP</label>
+  </div>
+  <div><button type="submit">Фільтрувати</button></div>
+</form>
+
+<p class="muted">
+  Знайдено за фільтром: {{ filtered_count }} · показано перші 300 за LTV ·
+  <a class="pagelink" href="{{ url_for('clients_export', segment=segment, heat_min=heat_min, heat_max=heat_max, min_orders=min_orders, min_ltv=min_ltv, brand=brand, vip_only=vip_only, not_bought_since=not_bought_since) }}">завантажити CSV для розсилки &darr;</a>
+</p>
+
+<h2>Встановити наступну дію</h2>
+<form class="filters" method="post" action="{{ url_for('clients_set_note') }}">
+  <div><label>Телефон</label><input type="text" name="phone" required placeholder="380..."></div>
+  <div>
+    <label>Наступна дія</label>
+    <select name="next_action" required>
+      {% for opt in next_action_options %}
+      <option value="{{ opt }}">{{ opt }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div><label>Коментар</label><input type="text" name="comment"></div>
+  <div><button type="submit">Зберегти</button></div>
+</form>
+
+<table>
+  <tr>
+    <th>Телефон</th><th>Ім'я</th><th>Успішно</th><th>Відмов</th>
+    <th>LTV</th><th>Остання покупка</th><th>Сегмент</th><th>VIP</th><th>Heat</th><th>Бренд</th><th>Ризик</th><th>Наступна дія</th>
+  </tr>
+  {% for c in clients %}
+  <tr>
+    <td>{{ c.phone }}</td>
+    <td>{{ c.client_name }}</td>
+    <td>{{ c.orders_success }}</td>
+    <td>{{ c.orders_refused }}</td>
+    <td class="{{ 'pos' if c.ltv >= 0 else 'neg' }}">{{ "%.0f"|format(c.ltv) }}</td>
+    <td>{{ c.last_purchase.date() if c.last_purchase == c.last_purchase else "—" }}</td>
+    <td>{{ c.segment }}</td>
+    <td>{% if c.is_vip %}<span class="badge success">VIP</span>{% endif %}</td>
+    <td>{{ c.heat_score }} ({{ c.heat_label }})</td>
+    <td>{{ c.favorite_brand }}</td>
+    <td>{% if c.risk %}<span class="badge risk">ризик</span>{% endif %}</td>
+    <td>{{ c.next_action if c.next_action == c.next_action else "" }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

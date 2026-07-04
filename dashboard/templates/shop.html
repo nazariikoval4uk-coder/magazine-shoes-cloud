@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ shop }} — Magazine Shoes{% endblock %}
+{% block content %}
+<h1 style="color:{{ shop_color }}">Магазин: {{ shop }}</h1>
+<p><a class="pagelink" href="{{ url_for('stores_view') }}">&larr; до всіх магазинів</a> ·
+   <a class="pagelink" href="{{ url_for('index') }}">до загального дашборду</a></p>
+
+<h2>По місяцях</h2>
+<table>
+  <tr><th>Місяць</th><th>Замовлень</th><th>Успішно</th><th>Відмова</th><th>В процесі</th><th>Викуп %</th><th>Прибуток</th></tr>
+  {% for row in summary %}
+  <tr>
+    <td>{{ row.month }}</td>
+    <td>{{ row.orders_total }}</td>
+    <td>{{ row.orders_success }}</td>
+    <td>{{ row.orders_refused }}</td>
+    <td>{{ row.orders_pending }}</td>
+    <td>{{ row.buyout_rate if row.buyout_rate == row.buyout_rate else "—" }}</td>
+    <td class="{{ 'pos' if row.profit >= 0 else 'neg' }}">{{ "%.0f"|format(row.profit) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2>Топ товарів магазину за прибутком</h2>
+<table>
+  <tr><th>Модель</th><th>Продано</th><th>Відмов</th><th>Викуп %</th><th>Прибуток</th></tr>
+  {% for p in products %}
+  <tr>
+    <td>{{ p.model }}</td>
+    <td>{{ p.orders_success }}</td>
+    <td>{{ p.orders_refused }}</td>
+    <td>{{ p.buyout_rate if p.buyout_rate == p.buyout_rate else "—" }}</td>
+    <td class="{{ 'pos' if p.total_profit >= 0 else 'neg' }}">{{ "%.0f"|format(p.total_profit) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<p><a class="pagelink" href="{{ url_for('orders_view', shop=shop) }}">Показати всі замовлення цього магазину &rarr;</a></p>
+{% endblock %}

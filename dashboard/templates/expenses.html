@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Витрати — Magazine Shoes{% endblock %}
+{% block content %}
+<h1>Витрати</h1>
+
+<div class="cards">
+  <div class="card" style="--card-accent:#ff5c5c">
+    <div class="label">Всього внесено</div>
+    <div class="value">{{ "%.0f"|format(total) }} ₴</div>
+  </div>
+  <div class="card" style="--card-accent:#6c63ff">
+    <div class="label">Записів</div>
+    <div class="value">{{ entries_count }}</div>
+  </div>
+</div>
+
+{% if by_shop %}
+<div class="panel">
+  <div class="panel-title">По магазинах</div>
+  {% for row in by_shop %}
+  <div class="bar-row">
+    <div class="bar-top">
+      <span class="bar-label">{{ row.shop }}</span>
+      <span style="color:{{ shop_colors.get(row.shop, '#7c7e9a') }}">{{ "%.0f"|format(row.amount) }} ₴</span>
+    </div>
+    <div class="bar-track"><div class="bar-fill" style="width:{{ row.width_pct }}%;background:{{ shop_colors.get(row.shop, '#7c7e9a') }}"></div></div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<h2>Додати витрату</h2>
+<form class="filters" method="post">
+  <div><label>Дата</label><input type="date" name="date" required></div>
+  <div>
+    <label>Магазин</label>
+    <select name="shop">
+      {% for s in shops %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+      <option value="Загальне">Загальне (не по магазину)</option>
+    </select>
+  </div>
+  <div><label>Категорія</label><input type="text" name="category" placeholder="Реклама, оренда..." required></div>
+  <div><label>Сума</label><input type="number" step="0.01" name="amount" required></div>
+  <div><label>Коментар</label><input type="text" name="comment"></div>
+  <div><button type="submit">Додати</button></div>
+</form>
+
+<h2>Історія витрат</h2>
+<table>
+  <tr><th>Дата</th><th>Магазин</th><th>Категорія</th><th>Сума</th><th>Коментар</th><th></th></tr>
+  {% for e in expenses %}
+  <tr>
+    <td>{{ e.date.date() if e.date == e.date else "—" }}</td>
+    <td>{{ e.shop }}</td>
+    <td>{{ e.category }}</td>
+    <td>{{ "%.0f"|format(e.amount) }}</td>
+    <td>{{ e.comment if e.comment == e.comment else "" }}</td>
+    <td>
+      <form method="post" action="{{ url_for('expenses_delete', row_id=e.row_id) }}" onsubmit="return confirm('Видалити цю витрату?')">
+        <button type="submit" style="background:rgba(255,92,92,0.15);border-color:var(--bad);color:var(--bad)">Видалити</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

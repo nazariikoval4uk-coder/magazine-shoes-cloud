@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Wishlist — Magazine Shoes{% endblock %}
+{% block content %}
+<h1>Wishlist — чого чекають клієнти</h1>
+<p class="muted">Коли приїхав товар — шукайте його тут, щоб знати, кому написати.</p>
+
+<div class="cards">
+  <div class="card" style="--card-accent:#fbbf24">
+    <div class="label">Очікує</div>
+    <div class="value">{{ active_count }}</div>
+  </div>
+  <div class="card" style="--card-accent:#22d3a0">
+    <div class="label">Виконано</div>
+    <div class="value">{{ fulfilled_count }}</div>
+  </div>
+  <div class="card" style="--card-accent:#6c63ff">
+    <div class="label">Всього записів</div>
+    <div class="value">{{ total_count }}</div>
+  </div>
+</div>
+
+<h2>Додати запис</h2>
+<form class="filters" method="post">
+  <div><label>Дата</label><input type="date" name="date" required></div>
+  <div><label>Телефон</label><input type="text" name="phone" required placeholder="380..."></div>
+  <div><label>Ім'я</label><input type="text" name="client_name" placeholder="не обов'язково"></div>
+  <div><label>Що чекає</label><input type="text" name="item" required placeholder="модель, розмір, колір" style="width:260px"></div>
+  <div><label>Коментар</label><input type="text" name="comment"></div>
+  <div><button type="submit">Додати</button></div>
+</form>
+
+<h2>Пошук по товару</h2>
+<form class="filters" method="get">
+  <div>
+    <label>Пошук (модель/розмір/колір)</label>
+    <input type="text" name="q" value="{{ q }}" placeholder="напр. 1906R або 42">
+  </div>
+  <div>
+    <label><input type="checkbox" name="active_only" value="1" {{ "checked" if active_only }}> лише активні (не виконані)</label>
+  </div>
+  <div><button type="submit">Шукати</button></div>
+</form>
+
+<table>
+  <tr>
+    <th>Дата</th><th>Телефон</th><th>Ім'я</th><th>Чого чекає</th><th>Коментар</th><th>Статус</th><th></th>
+  </tr>
+  {% for w in items %}
+  <tr>
+    <td>{{ w.date.date() if w.date == w.date else "—" }}</td>
+    <td>{{ w.phone }}</td>
+    <td>{{ w.client_name if w.client_name == w.client_name else "" }}</td>
+    <td>{{ w.item }}</td>
+    <td>{{ w.comment if w.comment == w.comment else "" }}</td>
+    <td>
+      {% if w.status == "очікує" %}<span class="badge pending">очікує</span>
+      {% else %}<span class="badge success">виконано</span>{% endif %}
+    </td>
+    <td>
+      {% if w.status == "очікує" %}
+      <form method="post" action="{{ url_for('wishlist_fulfill', row_id=w.row_id) }}">
+        <button type="submit">Виконано</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

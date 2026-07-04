@@ -23,6 +23,13 @@ def load_orders() -> pd.DataFrame:
     for col in ("margin", "income_raw", "prepayment", "cost_price"):
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
+    # Колонка "Маржа" з CRM не враховує часткову передплату (вона стягується
+    # окремо від накладеного платежу при отриманні). Реальний прибуток =
+    # маржа з CRM + передплата. Підтверджено звіркою власника: 96/100 замовлень
+    # збіглись з ручним підрахунком тільки після додавання передплати.
+    df["margin_raw"] = df["margin"]
+    df["margin"] = df["margin_raw"] + df["prepayment"].fillna(0)
+
     # При відмові "income_raw" зберігає ціну відмови зі знаком мінус.
     # Залишок = передплата (0, якщо її не було) - ціна відмови.
     is_refused = df["outcome"] == "refused"

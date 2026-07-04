@@ -497,6 +497,10 @@ def plan_view():
     result = plan_vs_fact(orders, plan)
     totals = monthly_totals(result)
 
+    current_year = pd.Timestamp.now().strftime("%Y")
+    result = result[result["month"].str.startswith(current_year)]
+    totals = totals[totals["month"].str.startswith(current_year)]
+
     months = sorted(result["month"].dropna().unique(), reverse=True)
     latest_month = months[0] if months else None
 

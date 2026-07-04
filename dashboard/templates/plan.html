@@ -2,7 +2,7 @@
 {% block title %}План/факт — KOVALCHUK{% endblock %}
 {% block content %}
 <h1>Місячний дашборд: план/факт</h1>
-<p class="muted">Чистий прибуток по всіх магазинах порівняно з планом.</p>
+<p class="muted">Чистий прибуток по всіх магазинах порівняно з планом. Показано лише поточний рік ({{ current_month[:4] }}).</p>
 
 {% if latest_total %}
 <h2>Разом за {{ latest_month }}</h2>

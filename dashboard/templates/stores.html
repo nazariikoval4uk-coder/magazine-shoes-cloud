@@ -43,7 +43,7 @@
         <div class="store-stat"><div class="ssl">Викуп %</div><div class="ssv">{{ w.buyout_rate if w.buyout_rate == w.buyout_rate else "—" }}</div></div>
         <div class="store-stat"><div class="ssl">Маржа</div><div class="ssv {{ 'pos' if w.margin >= 0 else 'neg' }}">{{ "%.0f"|format(w.margin) }} ₴</div></div>
       </div>
-      <div class="muted" style="margin-top:8px">Собівартість проданого зі складу: {{ "%.0f"|format(w.turnover_cost) }} ₴</div>
+      <div class="muted" style="margin-top:8px">Собівартість проданого зі складу (сума "Дроп ціна" по успішних): {{ "%.0f"|format(w.turnover_cost) }} ₴</div>
     </div>
     {% endif %}
     <p style="margin-top:12px"><a class="pagelink" href="{{ url_for('shop_detail', name=s.shop) }}">Деталі по місяцях і товарах &rarr;</a></p>

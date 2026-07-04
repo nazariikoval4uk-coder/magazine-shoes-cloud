@@ -37,7 +37,9 @@ def resolve_period(period: str, date_from: str, date_to: str, orders: pd.DataFra
     max_date = orders["date"].max()
 
     if period == "custom" and date_from and date_to:
-        return pd.Timestamp(date_from), pd.Timestamp(date_to)
+        # "До" має включати весь день, а не лише до півночі
+        end_of_day = pd.Timestamp(date_to) + timedelta(hours=23, minutes=59, seconds=59)
+        return pd.Timestamp(date_from), end_of_day
     if period == "month":
         return today.replace(day=1), today
     if period == "3m":

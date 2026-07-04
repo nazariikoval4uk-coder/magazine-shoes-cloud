@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>{% block title %}Magazine Shoes{% endblock %}</title>
+<title>{% block title %}KOVALCHUK{% endblock %}</title>
 <style>
   :root {
     --bg: #0b0c10; --surface: #13141a; --card: #1a1b24; --border: #252633; --border2: #2e3045;
@@ -111,7 +111,7 @@
 </head>
 <body>
 <nav>
-  <span class="brand">👟 MAGAZINE SHOES</span>
+  <span class="brand">KOVALCHUK</span>
   <a href="{{ url_for('upload_view') }}" class="{{ 'active' if request.endpoint == 'upload_view' }}">Новий XLS</a>
   <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' }}">Загальний</a>
   <a href="{{ url_for('stores_view') }}" class="{{ 'active' if request.endpoint in ['stores_view', 'shop_detail'] }}">Магазини</a>

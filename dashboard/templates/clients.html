@@ -20,6 +20,16 @@
   </div>
 </div>
 
+<h2>Статус контакту</h2>
+<div class="cards">
+  {% for status, count in contact_status_counts.items() %}
+  <div class="card" style="--card-accent:{{ contact_status_colors.get(status, '#7c7e9a') }}">
+    <div class="label">{{ status }}</div>
+    <div class="value">{{ count }}</div>
+  </div>
+  {% endfor %}
+</div>
+
 <form class="filters" method="get">
   <div>
     <label>Сегмент</label>
@@ -60,6 +70,15 @@
     <input type="date" name="not_bought_since" value="{{ not_bought_since }}">
   </div>
   <div>
+    <label>Статус контакту</label>
+    <select name="contact_status">
+      <option value="">Всі</option>
+      {% for opt in contact_status_options %}
+      <option value="{{ opt }}" {{ "selected" if opt == contact_status }}>{{ opt }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
     <label><input type="checkbox" name="vip_only" value="1" {{ "checked" if vip_only }}> лише VIP</label>
   </div>
   <div><button type="submit">Фільтрувати</button></div>
@@ -67,12 +86,20 @@
 
 <p class="muted">
   Знайдено за фільтром: {{ filtered_count }} · показано перші 300 за LTV ·
-  <a class="pagelink" href="{{ url_for('clients_export', segment=segment, heat_min=heat_min, heat_max=heat_max, min_orders=min_orders, min_ltv=min_ltv, brand=brand, vip_only=vip_only, not_bought_since=not_bought_since) }}">завантажити CSV для розсилки &darr;</a>
+  <a class="pagelink" href="{{ url_for('clients_export', segment=segment, heat_min=heat_min, heat_max=heat_max, min_orders=min_orders, min_ltv=min_ltv, brand=brand, vip_only=vip_only, not_bought_since=not_bought_since, contact_status=contact_status) }}">завантажити CSV для розсилки &darr;</a>
 </p>
 
 <h2>Встановити наступну дію</h2>
 <form class="filters" method="post" action="{{ url_for('clients_set_note') }}">
   <div><label>Телефон</label><input type="text" name="phone" required placeholder="380..."></div>
+  <div>
+    <label>Статус контакту</label>
+    <select name="contact_status" required>
+      {% for opt in contact_status_options %}
+      <option value="{{ opt }}">{{ opt }}</option>
+      {% endfor %}
+    </select>
+  </div>
   <div>
     <label>Наступна дія</label>
     <select name="next_action" required>
@@ -88,7 +115,7 @@
 <table>
   <tr>
     <th>Телефон</th><th>Ім'я</th><th>Успішно</th><th>Відмов</th>
-    <th>LTV</th><th>Остання покупка</th><th>Сегмент</th><th>VIP</th><th>Heat</th><th>Бренд</th><th>Ризик</th><th>Наступна дія</th>
+    <th>LTV</th><th>Остання покупка</th><th>Сегмент</th><th>VIP</th><th>Heat</th><th>Бренд</th><th>Ризик</th><th>Статус контакту</th><th>Наступна дія</th>
   </tr>
   {% for c in clients %}
   <tr>
@@ -103,6 +130,7 @@
     <td>{{ c.heat_score }} ({{ c.heat_label }})</td>
     <td>{{ c.favorite_brand }}</td>
     <td>{% if c.risk %}<span class="badge risk">ризик</span>{% endif %}</td>
+    <td><span style="color:{{ contact_status_colors.get(c.contact_status, '#7c7e9a') }}; font-weight:700">{{ c.contact_status }}</span></td>
     <td>{{ c.next_action if c.next_action == c.next_action else "" }}</td>
   </tr>
   {% endfor %}

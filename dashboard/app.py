@@ -20,7 +20,7 @@ from scripts.analysis.shop_summary import shop_monthly_summary, overall_monthly_
 from scripts.analysis.product_ranking import product_ranking  # noqa: E402
 from scripts.analysis.client_segmentation import client_segmentation  # noqa: E402
 from scripts.analysis.plan_vs_fact import plan_vs_fact, monthly_totals  # noqa: E402
-from scripts.analysis.supplier_summary import supplier_summary  # noqa: E402
+from scripts.analysis.supplier_summary import supplier_summary, warehouse_by_shop  # noqa: E402
 from scripts.analysis.seasonality import seasonality_summary, top_products_by_month  # noqa: E402
 from scripts.analysis.cohort_analysis import cohort_analysis, MAX_OFFSET  # noqa: E402
 from scripts.analysis.refusal_analysis import (  # noqa: E402
@@ -156,6 +156,8 @@ def stores_view():
     start, end = resolve_period(period, date_from, date_to, orders)
     filtered = filter_orders(orders, start, end, selected_shops)
     breakdown = shop_breakdown(filtered)
+    warehouse = warehouse_by_shop(filtered)
+    warehouse_by_name = {row["shop"]: row for row in warehouse.to_dict("records")}
 
     return render_template(
         "stores.html",
@@ -166,6 +168,7 @@ def stores_view():
         selected_shops=selected_shops,
         shop_colors=SHOP_COLORS,
         stores=breakdown.to_dict("records"),
+        warehouse=warehouse_by_name,
     )
 
 
@@ -369,6 +372,7 @@ def _client_filters_from_request():
         "brand": request.args.get("brand", ""),
         "vip_only": request.args.get("vip_only", ""),
         "not_bought_since": request.args.get("not_bought_since", ""),
+        "contact_status": request.args.get("contact_status", ""),
     }
 
 
@@ -392,6 +396,8 @@ def _apply_client_filters(clients, filters):
         clients = clients[
             clients["last_purchase"].isna() | (clients["last_purchase"] < cutoff)
         ]
+    if filters["contact_status"]:
+        clients = clients[clients["contact_status"] == filters["contact_status"]]
     return clients
 
 
@@ -404,12 +410,20 @@ NEXT_ACTION_OPTIONS = [
     "VIP - повідомляти першим",
 ]
 
+CONTACT_STATUS_OPTIONS = ["не писали", "написали", "ігнорує", "відновили"]
+CONTACT_STATUS_COLORS = {
+    "не писали": "#7c7e9a", "написали": "#60a5fa",
+    "ігнорує": "#ff5c5c", "відновили": "#22d3a0",
+}
+
 
 def _clients_with_notes(orders):
     clients = client_segmentation(orders)
-    notes = load_client_notes()[["phone", "next_action", "comment"]]
+    notes = load_client_notes()[["phone", "next_action", "comment", "contact_status"]]
     notes = notes.rename(columns={"comment": "note_comment"})
-    return clients.merge(notes, on="phone", how="left")
+    clients = clients.merge(notes, on="phone", how="left")
+    clients["contact_status"] = clients["contact_status"].fillna("не писали")
+    return clients
 
 
 @app.route("/clients")
@@ -427,9 +441,12 @@ def clients_view():
         filtered_count=len(clients),
         brands=brands,
         next_action_options=NEXT_ACTION_OPTIONS,
+        contact_status_options=CONTACT_STATUS_OPTIONS,
+        contact_status_colors=CONTACT_STATUS_COLORS,
         segment_colors=SEGMENT_COLORS,
         **filters,
         segment_counts=all_clients["segment"].value_counts().to_dict(),
+        contact_status_counts=all_clients["contact_status"].value_counts().to_dict(),
         risk_count=int(all_clients["risk"].sum()),
         vip_count=int(all_clients["is_vip"].sum()),
     )
@@ -441,6 +458,7 @@ def clients_set_note():
         phone=request.form["phone"],
         next_action=request.form["next_action"],
         comment=request.form.get("comment", ""),
+        contact_status=request.form.get("contact_status", "не писали"),
     )
     return redirect(url_for("clients_view"))
 
@@ -454,7 +472,7 @@ def clients_export():
 
     export_cols = [
         "phone", "client_name", "segment", "heat_score", "is_vip",
-        "orders_success", "ltv", "favorite_brand", "last_purchase", "next_action",
+        "orders_success", "ltv", "favorite_brand", "last_purchase", "contact_status", "next_action",
     ]
     csv_data = clients[export_cols].to_csv(index=False, encoding="utf-8-sig")
     return app.response_class(

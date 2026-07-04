@@ -26,6 +26,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -53,44 +54,34 @@ def extract_brand(model: str) -> str:
     return "інше"
 
 
-def _segment(row: pd.Series) -> str:
-    if row["orders_success"] == 0:
-        return "без покупок"
-    if row["orders_success"] == 1:
-        return "новий"
-    days = row["days_since_last_purchase"]
-    if days <= RECENT_DAYS:
-        return "активний"
-    if days <= FADING_DAYS:
-        return "заснувший"
-    if days <= COLD_DAYS:
-        return "холодний"
-    return "втрачений"
+def _segment_vectorized(clients: pd.DataFrame) -> pd.Series:
+    days = clients["days_since_last_purchase"]
+    conditions = [
+        clients["orders_success"] == 0,
+        clients["orders_success"] == 1,
+        days <= RECENT_DAYS,
+        days <= FADING_DAYS,
+        days <= COLD_DAYS,
+    ]
+    choices = ["без покупок", "новий", "активний", "заснувший", "холодний"]
+    return pd.Series(np.select(conditions, choices, default="втрачений"), index=clients.index)
 
 
-def _heat_score(row: pd.Series) -> int:
-    score = 0
-    days = row["days_since_last_purchase"]
-    if pd.notna(days):
-        if days <= RECENT_DAYS:
-            score += 40
-        if days > FADING_DAYS:
-            score -= 20
-        if days > COLD_DAYS:
-            score -= 40
-    if row["orders_success"] > 2:
-        score += 20
-    if row["orders_success"] > 5:
-        score += 30
-    return max(0, min(100, score))
+def _heat_score_vectorized(clients: pd.DataFrame) -> pd.Series:
+    days = clients["days_since_last_purchase"]
+    score = pd.Series(0, index=clients.index)
+    score += np.where(days <= RECENT_DAYS, 40, 0)
+    score += np.where(days > FADING_DAYS, -20, 0)
+    score += np.where(days > COLD_DAYS, -40, 0)
+    score += np.where(clients["orders_success"] > 2, 20, 0)
+    score += np.where(clients["orders_success"] > 5, 30, 0)
+    return score.clip(0, 100)
 
 
-def _heat_label(score: int) -> str:
-    if score <= 30:
-        return "холодний"
-    if score <= 70:
-        return "теплий"
-    return "гарячий"
+def _heat_label_vectorized(heat_score: pd.Series) -> pd.Series:
+    conditions = [heat_score <= 30, heat_score <= 70]
+    choices = ["холодний", "теплий"]
+    return pd.Series(np.select(conditions, choices, default="гарячий"), index=heat_score.index)
 
 
 def client_segmentation(orders: pd.DataFrame, as_of: pd.Timestamp | None = None) -> pd.DataFrame:
@@ -103,13 +94,17 @@ def client_segmentation(orders: pd.DataFrame, as_of: pd.Timestamp | None = None)
     ).str.strip()
     orders["brand"] = orders["model"].apply(extract_brand)
     orders["success_brand"] = orders["brand"].where(orders["outcome"] == "success")
+    # булеві колонки замість лямбд у .agg() - вбудовані ("sum") агрегації рахуються
+    # у векторизованому Cython-коді pandas, а не Python-функцією на кожну групу.
+    orders["is_success"] = orders["outcome"] == "success"
+    orders["is_refused"] = orders["outcome"] == "refused"
 
     grouped = orders.groupby("phone")
     clients = grouped.agg(
         client_name=("client_name", "first"),
         orders_total=("order_key", "count"),
-        orders_success=("outcome", lambda s: (s == "success").sum()),
-        orders_refused=("outcome", lambda s: (s == "refused").sum()),
+        orders_success=("is_success", "sum"),
+        orders_refused=("is_refused", "sum"),
         ltv=("success_margin", "sum"),
         first_order=("date", "min"),
         last_order=("date", "max"),
@@ -124,24 +119,31 @@ def client_segmentation(orders: pd.DataFrame, as_of: pd.Timestamp | None = None)
     )
     clients["days_since_last_purchase"] = (as_of - clients["last_purchase"]).dt.days
 
-    favorite_brand = (
+    # улюблений бренд: рахуємо частоти (векторизовано), потім idxmax на групу (теж векторизовано)
+    brand_counts = (
         orders.dropna(subset=["success_brand"])
-        .groupby("phone")["success_brand"]
-        .agg(lambda s: s.value_counts().idxmax() if len(s) else "—")
+        .groupby(["phone", "success_brand"])
+        .size()
+        .reset_index(name="n")
     )
+    if len(brand_counts):
+        top_idx = brand_counts.groupby("phone")["n"].idxmax()
+        favorite_brand = brand_counts.loc[top_idx].set_index("phone")["success_brand"]
+    else:
+        favorite_brand = pd.Series(dtype=str)
     clients = clients.merge(
         favorite_brand.rename("favorite_brand"), on="phone", how="left",
     )
     clients["favorite_brand"] = clients["favorite_brand"].fillna("—")
 
-    clients["segment"] = clients.apply(_segment, axis=1)
+    clients["segment"] = _segment_vectorized(clients)
     clients["is_vip"] = clients["orders_success"] >= VIP_ORDERS
     clients["risk"] = (
         (clients["orders_success"] >= 2)
         & clients["segment"].isin(["заснувший", "холодний", "втрачений"])
     )
-    clients["heat_score"] = clients.apply(_heat_score, axis=1)
-    clients["heat_label"] = clients["heat_score"].apply(_heat_label)
+    clients["heat_score"] = _heat_score_vectorized(clients)
+    clients["heat_label"] = _heat_label_vectorized(clients["heat_score"])
 
     return clients.sort_values("ltv", ascending=False)
 

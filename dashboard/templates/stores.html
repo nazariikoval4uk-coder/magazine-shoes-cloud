@@ -33,6 +33,19 @@
       <div class="store-stat"><div class="ssl">В дорозі</div><div class="ssv">{{ s.pending|int }}</div></div>
       <div class="store-stat"><div class="ssl">Сплачено (відм.)</div><div class="ssv neg">{{ "%.0f"|format(s.refusal_cost_total) }} ₴</div></div>
     </div>
+    {% set w = warehouse.get(s.shop) %}
+    {% if w %}
+    <div class="panel" style="margin-top:12px; padding:12px 14px; border-color:rgba(108,99,255,0.3); background:rgba(108,99,255,0.05);">
+      <div class="panel-title" style="margin-bottom:8px">⚡ Склад SHTORM (мій склад — оборотність)</div>
+      <div class="store-stats" style="grid-template-columns:1fr 1fr 1fr 1fr;">
+        <div class="store-stat"><div class="ssl">Продано</div><div class="ssv pos">{{ w.orders_success|int }}</div></div>
+        <div class="store-stat"><div class="ssl">Відмов</div><div class="ssv neg">{{ w.orders_refused|int }}</div></div>
+        <div class="store-stat"><div class="ssl">Викуп %</div><div class="ssv">{{ w.buyout_rate if w.buyout_rate == w.buyout_rate else "—" }}</div></div>
+        <div class="store-stat"><div class="ssl">Маржа</div><div class="ssv {{ 'pos' if w.margin >= 0 else 'neg' }}">{{ "%.0f"|format(w.margin) }} ₴</div></div>
+      </div>
+      <div class="muted" style="margin-top:8px">Собівартість проданого зі складу: {{ "%.0f"|format(w.turnover_cost) }} ₴</div>
+    </div>
+    {% endif %}
     <p style="margin-top:12px"><a class="pagelink" href="{{ url_for('shop_detail', name=s.shop) }}">Деталі по місяцях і товарах &rarr;</a></p>
   </div>
   {% endfor %}

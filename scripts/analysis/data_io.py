@@ -8,8 +8,15 @@ DATA_PROCESSED = PROJECT_ROOT / "data" / "processed"
 DATA_MANUAL = PROJECT_ROOT / "data" / "manual"
 
 
+_orders_cache = {"mtime": None, "df": None}
+
+
 def load_orders() -> pd.DataFrame:
     path = DATA_PROCESSED / "orders_master.csv"
+    mtime = path.stat().st_mtime
+    if _orders_cache["mtime"] == mtime:
+        return _orders_cache["df"].copy()
+
     df = pd.read_csv(path, dtype={"order_key": str, "phone": str, "sku": str})
     df["date"] = pd.to_datetime(df["date"], errors="coerce")
     df["month"] = df["date"].dt.to_period("M").astype(str)
@@ -26,7 +33,9 @@ def load_orders() -> pd.DataFrame:
     )
     df["refusal_remainder"] = pd.to_numeric(df["refusal_remainder"], errors="coerce")
 
-    return df
+    _orders_cache["mtime"] = mtime
+    _orders_cache["df"] = df
+    return df.copy()
 
 
 def load_expenses() -> pd.DataFrame:
@@ -110,22 +119,26 @@ def mark_wishlist_fulfilled(row_id: int) -> None:
 def load_client_notes() -> pd.DataFrame:
     path = DATA_MANUAL / "client_notes.csv"
     df = pd.read_csv(path, dtype={"phone": str})
+    if "contact_status" not in df.columns:
+        df["contact_status"] = "не писали"
     df["updated_date"] = pd.to_datetime(df["updated_date"], errors="coerce")
     return df
 
 
-def set_client_note(phone: str, next_action: str, comment: str) -> None:
+def set_client_note(phone: str, next_action: str, comment: str, contact_status: str) -> None:
     path = DATA_MANUAL / "client_notes.csv"
     df = pd.read_csv(path, dtype={"phone": str})
+    if "contact_status" not in df.columns:
+        df["contact_status"] = "не писали"
     today = pd.Timestamp.now().strftime("%Y-%m-%d")
     if phone in df["phone"].values:
-        df.loc[df["phone"] == phone, ["next_action", "comment", "updated_date"]] = (
-            next_action, comment, today
+        df.loc[df["phone"] == phone, ["next_action", "comment", "contact_status", "updated_date"]] = (
+            next_action, comment, contact_status, today
         )
     else:
         new_row = pd.DataFrame([{
             "phone": phone, "next_action": next_action,
-            "comment": comment, "updated_date": today,
+            "comment": comment, "contact_status": contact_status, "updated_date": today,
         }])
         df = pd.concat([df, new_row], ignore_index=True)
     df.to_csv(path, index=False, encoding="utf-8-sig")

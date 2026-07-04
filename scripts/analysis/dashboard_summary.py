@@ -88,7 +88,7 @@ def kpi_summary(filtered: pd.DataFrame) -> dict:
 
 def shop_breakdown(filtered: pd.DataFrame) -> pd.DataFrame:
     grouped = filtered.groupby("shop")
-    rows = grouped.apply(lambda g: pd.Series(kpi_summary(g)), include_groups=False).reset_index()
+    rows = grouped.apply(lambda g: pd.Series(kpi_summary(g))).reset_index()
     return rows.sort_values("total_margin", ascending=False)
 
 

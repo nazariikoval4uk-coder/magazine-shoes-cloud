@@ -31,6 +31,7 @@ from scripts.analysis.dashboard_summary import (  # noqa: E402
     ALL_SHOPS, SHOP_COLORS, KPI_COLORS, resolve_period, filter_orders,
     kpi_summary, shop_breakdown, monthly_chart_data, generate_insights,
 )
+from scripts.analysis import hosting_status  # noqa: E402
 
 DATA_RAW = MASTER_PATH.resolve().parents[1] / "raw"
 
@@ -73,6 +74,23 @@ def login_view():
 def logout_view():
     session.clear()
     return redirect(url_for("login_view"))
+
+
+@app.context_processor
+def inject_hosting_status():
+    return {"hosting": hosting_status.load_status()}
+
+
+@app.route("/hosting", methods=["GET", "POST"])
+def hosting_view():
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "renew":
+            hosting_status.renew()
+        elif action == "set_date":
+            hosting_status.set_expiry(request.form["expires_at"])
+        return redirect(url_for("hosting_view"))
+    return render_template("hosting.html", status=hosting_status.load_status())
 
 PAGE_SIZE = 100
 

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Хостинг — Magazine Shoes{% endblock %}
+{% block content %}
+<h1>Хостинг (PythonAnywhere)</h1>
+<p class="muted">
+  Безкоштовний тариф PythonAnywhere вимикає сайт, якщо його регулярно не "продовжувати"
+  на сторінці акаунту PythonAnywhere. Цей лічильник — просто нагадування в самій системі,
+  щоб не забути це зробити вчасно.
+</p>
+
+{% if status %}
+<div class="cards">
+  <div class="card" style="--card-accent: {{ '#ff5c5c' if status.level == 'critical' else ('#fbbf24' if status.level == 'warning' else '#22d3a0') }}">
+    <div class="label">Днів залишилось</div>
+    <div class="value">{{ status.days_left }}</div>
+    <div class="sub">діє до {{ status.expires_at }}</div>
+  </div>
+</div>
+{% else %}
+<p class="muted">Дату ще не задано — вкажіть її нижче (дивіться на сторінці акаунту PythonAnywhere).</p>
+{% endif %}
+
+<h2>Дії</h2>
+<div class="panel" style="max-width: 440px;">
+  <form method="post">
+    <input type="hidden" name="action" value="renew">
+    <p style="margin: 0 0 12px; font-size: 12px; color: var(--muted); line-height: 1.5;">
+      Після того як натиснули кнопку продовження на сторінці акаунту PythonAnywhere —
+      натисніть тут, і відлік почнеться заново (+30 днів).
+    </p>
+    <button type="submit" style="background: rgba(34,211,160,0.15); border: 1px solid var(--good); color: var(--good); border-radius: 6px; padding: 8px 16px; font-size: 13px; font-weight: 700; cursor: pointer;">
+      Я продовжив на PythonAnywhere
+    </button>
+  </form>
+
+  <form method="post" class="filters" style="margin-top: 20px;">
+    <input type="hidden" name="action" value="set_date">
+    <div>
+      <label>Або вкажіть дату вручну</label>
+      <input type="date" name="expires_at" value="{{ status.expires_at if status else '' }}" required>
+    </div>
+    <button type="submit">Зберегти дату</button>
+  </form>
+</div>
+{% endblock %}

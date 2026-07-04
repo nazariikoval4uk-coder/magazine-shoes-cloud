@@ -100,6 +100,13 @@
   .insight .ico { flex-shrink: 0; }
   .insight.success { background: rgba(34,211,160,0.05); border-color: rgba(34,211,160,0.15); }
   .insight.info { background: rgba(108,99,255,0.05); border-color: rgba(108,99,255,0.15); }
+
+  .nav-right { margin-left: auto; display: flex; gap: 12px; align-items: center; }
+  .hosting-pill { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-decoration: none; border: 1px solid var(--border2); }
+  .hosting-pill.hosting-ok { color: var(--good); border-color: rgba(34,211,160,0.3); background: rgba(34,211,160,0.08); }
+  .hosting-pill.hosting-warning { color: var(--warn); border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.08); }
+  .hosting-pill.hosting-critical { color: var(--bad); border-color: rgba(255,92,92,0.3); background: rgba(255,92,92,0.08); animation: hosting-pulse 2s infinite; }
+  @keyframes hosting-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 </style>
 </head>
 <body>
@@ -119,7 +126,12 @@
   <a href="{{ url_for('clients_view') }}" class="{{ 'active' if request.endpoint == 'clients_view' }}">Клієнти</a>
   <a href="{{ url_for('wishlist_view') }}" class="{{ 'active' if request.endpoint == 'wishlist_view' }}">Wishlist</a>
   <a href="{{ url_for('expenses_view') }}" class="{{ 'active' if request.endpoint == 'expenses_view' }}">Витрати</a>
-  <a href="{{ url_for('logout_view') }}" style="margin-left:auto">Вийти</a>
+  <div class="nav-right">
+    {% if hosting %}
+    <a href="{{ url_for('hosting_view') }}" class="hosting-pill hosting-{{ hosting.level }}">⏱ {{ hosting.days_left }} дн.</a>
+    {% endif %}
+    <a href="{{ url_for('logout_view') }}">Вийти</a>
+  </div>
 </nav>
 <main>
 {% block content %}{% endblock %}

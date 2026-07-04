@@ -14,7 +14,7 @@ from werkzeug.security import check_password_hash  # noqa: E402
 from scripts.analysis.data_io import (  # noqa: E402
     load_orders, load_expenses, load_plan, append_expense, delete_expense,
     load_wishlist, append_wishlist, mark_wishlist_fulfilled,
-    load_client_notes, set_client_note, set_refusal_reason,
+    load_client_notes, set_client_note, set_refusal_reason, set_plan,
 )
 from scripts.analysis.shop_summary import shop_monthly_summary, overall_monthly_trend  # noqa: E402
 from scripts.analysis.product_ranking import product_ranking  # noqa: E402
@@ -227,11 +227,17 @@ def cohorts_view():
 @app.route("/shop/<name>")
 def shop_detail(name):
     orders = load_orders()
-    summary = shop_monthly_summary(orders)
+
+    period = request.args.get("period", "all")
+    date_from = request.args.get("date_from", "")
+    date_to = request.args.get("date_to", "")
+    start, end = resolve_period(period, date_from, date_to, orders)
+    filtered = filter_orders(orders, start, end, [name])
+
+    summary = shop_monthly_summary(filtered)
     shop_summary = summary[summary["shop"] == name].sort_values("month", ascending=False)
 
-    shop_orders = orders[orders["shop"] == name]
-    products = product_ranking(shop_orders).head(15)
+    products = product_ranking(filtered).head(15)
 
     return render_template(
         "shop.html",
@@ -239,6 +245,9 @@ def shop_detail(name):
         shop_color=SHOP_COLORS.get(name, "#7c7e9a"),
         summary=shop_summary.to_dict("records"),
         products=products.to_dict("records"),
+        period=period,
+        date_from=start.strftime("%Y-%m-%d"),
+        date_to=end.strftime("%Y-%m-%d"),
     )
 
 
@@ -269,6 +278,7 @@ def orders_view():
         haystack = (
             filtered["last_name"].fillna("") + " " + filtered["first_name"].fillna("")
             + " " + filtered["phone"].astype(str) + " " + filtered["model"].fillna("")
+            + " " + filtered["client_nickname"].fillna("")
         ).str.lower()
         filtered = filtered[haystack.str.contains(q, na=False)]
 
@@ -454,8 +464,16 @@ def clients_export():
     )
 
 
-@app.route("/plan")
+@app.route("/plan", methods=["GET", "POST"])
 def plan_view():
+    if request.method == "POST":
+        set_plan(
+            month=request.form["month"],
+            shop=request.form["shop"],
+            planned_profit=request.form["planned_profit"],
+        )
+        return redirect(url_for("plan_view", month=request.form["month"]))
+
     orders = load_orders()
     plan = load_plan()
     result = plan_vs_fact(orders, plan)
@@ -471,6 +489,8 @@ def plan_view():
     latest_total_rows = totals[totals["month"] == latest_month]
     latest_total = latest_total_rows.to_dict("records")[0] if len(latest_total_rows) else None
 
+    current_month = pd.Timestamp.now().strftime("%Y-%m")
+
     return render_template(
         "plan.html",
         rows=rows.to_dict("records"),
@@ -479,6 +499,9 @@ def plan_view():
         latest_month=latest_month,
         months=months,
         month=month,
+        all_shops=ALL_SHOPS[:-1],
+        shop_colors=SHOP_COLORS,
+        current_month=current_month,
     )
 
 

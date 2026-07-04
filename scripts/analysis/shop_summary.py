@@ -6,6 +6,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.analysis.data_io import load_orders  # noqa: E402
+from scripts.analysis.table_format import format_month_label, heat_colors  # noqa: E402
 
 
 def shop_monthly_summary(orders: pd.DataFrame) -> pd.DataFrame:
@@ -46,6 +47,9 @@ def overall_monthly_trend(orders: pd.DataFrame) -> pd.DataFrame:
 
     trend["buyout_rate_delta"] = trend["buyout_rate"].diff().round(1)
     trend["profit_delta"] = trend["profit"].diff().round(0)
+    trend["month_label"] = trend["month"].apply(format_month_label)
+    trend["buyout_rate_bg"] = heat_colors(trend["buyout_rate"])
+    trend["profit_bg"] = heat_colors(trend["profit"])
 
     return trend.sort_values("month", ascending=False)
 

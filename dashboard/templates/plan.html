@@ -2,7 +2,7 @@
 {% block title %}План/факт — KOVALCHUK{% endblock %}
 {% block content %}
 <h1>Місячний дашборд: план/факт</h1>
-<p class="muted">Чистий прибуток по всіх магазинах порівняно з планом ({{ "data/manual/plan.csv" }}).</p>
+<p class="muted">Чистий прибуток по всіх магазинах порівняно з планом.</p>
 
 {% if latest_total %}
 <h2>Разом за {{ latest_month }}</h2>
@@ -28,23 +28,46 @@
 <p class="muted">Немає даних за останній місяць.</p>
 {% endif %}
 
+<h2>Встановити план на місяць</h2>
+<div class="panel" style="max-width: 480px;">
+  <form method="post" class="filters">
+    <div>
+      <label>Місяць</label>
+      <input type="month" name="month" value="{{ current_month }}" required>
+    </div>
+    <div>
+      <label>Магазин</label>
+      <select name="shop" required>
+        {% for s in all_shops %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>План прибутку (грн)</label>
+      <input type="number" name="planned_profit" step="1" min="0" required>
+    </div>
+    <div><button type="submit">Зберегти план</button></div>
+  </form>
+</div>
+
 <h2>По місяцях (усі магазини разом)</h2>
-<table>
-  <tr>
-    <th>Місяць</th><th>План</th><th>Факт</th><th>Відхилення</th><th>Виконання %</th>
-  </tr>
-  {% for row in totals %}
-  <tr>
-    <td>{{ row.month }}</td>
-    <td>{{ "%.0f"|format(row.planned_profit) }}</td>
-    <td class="{{ 'pos' if row.fact_profit >= 0 else 'neg' }}">{{ "%.0f"|format(row.fact_profit) }}</td>
-    <td class="{{ 'pos' if row.variance >= 0 else 'neg' }}">{{ "%.0f"|format(row.variance) }}</td>
-    <td>{{ row.completion_pct if row.completion_pct == row.completion_pct else "—" }}</td>
-  </tr>
-  {% else %}
-  <tr><td colspan="5" class="muted">Немає даних плану.</td></tr>
-  {% endfor %}
-</table>
+{% for row in totals %}
+<div class="bar-row">
+  <div class="bar-top">
+    <span class="bar-label">{{ row.month }}</span>
+    <span>
+      план {{ "%.0f"|format(row.planned_profit) }} ₴ ·
+      <span class="{{ 'pos' if row.fact_profit >= 0 else 'neg' }}">факт {{ "%.0f"|format(row.fact_profit) }} ₴</span> ·
+      {{ row.completion_pct if row.completion_pct == row.completion_pct else "—" }}%
+    </span>
+  </div>
+  <div class="bar-track">
+    <div class="bar-fill" style="width:{{ [row.completion_pct, 100]|min if row.completion_pct == row.completion_pct else 0 }}%;
+      background:{{ 'var(--good)' if row.completion_pct and row.completion_pct >= 100 else 'var(--warn)' if row.completion_pct and row.completion_pct >= 70 else 'var(--bad)' }}"></div>
+  </div>
+</div>
+{% else %}
+<p class="muted">Немає даних плану.</p>
+{% endfor %}
 
 <h2>По магазинах</h2>
 <form class="filters" method="get">
@@ -58,21 +81,29 @@
     </select>
   </div>
 </form>
-<table>
-  <tr>
-    <th>Місяць</th><th>Магазин</th><th>План</th><th>Факт</th><th>Відхилення</th><th>Виконання %</th>
-  </tr>
+
+<div class="store-grid">
   {% for row in rows %}
-  <tr>
-    <td>{{ row.month }}</td>
-    <td><a class="pagelink" href="{{ url_for('shop_detail', name=row.shop) }}">{{ row.shop }}</a></td>
-    <td>{{ "%.0f"|format(row.planned_profit) }}</td>
-    <td class="{{ 'pos' if row.fact_profit >= 0 else 'neg' }}">{{ "%.0f"|format(row.fact_profit) }}</td>
-    <td class="{{ 'pos' if row.variance >= 0 else 'neg' }}">{{ "%.0f"|format(row.variance) }}</td>
-    <td>{{ row.completion_pct if row.completion_pct == row.completion_pct else "—" }}</td>
-  </tr>
+  <div class="store-card" style="--store-color:{{ shop_colors.get(row.shop, '#7c7e9a') }}">
+    <div class="store-name">{{ row.shop }} <span class="muted" style="font-size:11px; font-weight:400;">{{ row.month }}</span></div>
+    <div class="store-stats">
+      <div class="store-stat"><div class="ssl">План</div><div class="ssv">{{ "%.0f"|format(row.planned_profit) }} ₴</div></div>
+      <div class="store-stat"><div class="ssl">Факт</div><div class="ssv {{ 'pos' if row.fact_profit >= 0 else 'neg' }}">{{ "%.0f"|format(row.fact_profit) }} ₴</div></div>
+      <div class="store-stat"><div class="ssl">Відхилення</div><div class="ssv {{ 'pos' if row.variance >= 0 else 'neg' }}">{{ "%.0f"|format(row.variance) }} ₴</div></div>
+    </div>
+    <div class="bar-row" style="margin-bottom:0">
+      <div class="bar-top">
+        <span class="bar-label">Виконання</span>
+        <span class="{{ 'pos' if row.completion_pct and row.completion_pct >= 100 else '' }}">{{ row.completion_pct if row.completion_pct == row.completion_pct else "—" }}%</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:{{ [row.completion_pct, 100]|min if row.completion_pct == row.completion_pct else 0 }}%;
+          background:{{ 'var(--good)' if row.completion_pct and row.completion_pct >= 100 else 'var(--warn)' if row.completion_pct and row.completion_pct >= 70 else 'var(--bad)' }}"></div>
+      </div>
+    </div>
+  </div>
   {% else %}
-  <tr><td colspan="6" class="muted">Немає даних.</td></tr>
+  <p class="muted">Немає даних.</p>
   {% endfor %}
-</table>
+</div>
 {% endblock %}

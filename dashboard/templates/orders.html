@@ -55,7 +55,7 @@
   <div><label>Від</label><input type="date" name="date_from" value="{{ date_from }}"></div>
   <div><label>До</label><input type="date" name="date_to" value="{{ date_to }}"></div>
   <div>
-    <label>Пошук (ім'я/телефон/модель)</label>
+    <label>Пошук (ім'я/телефон/модель/Instagram)</label>
     <input type="text" name="q" value="{{ q }}">
   </div>
   <div><button type="submit">Фільтрувати</button></div>
@@ -63,17 +63,31 @@
 
 <table>
   <tr>
-    <th>Дата</th><th>Клієнт</th><th>Телефон</th><th>Магазин</th><th>Модель</th>
-    <th>Ціна</th><th>Маржа</th><th>Статус ТТН</th><th>Результат</th><th>Залишок (відмова)</th>
+    <th>Дата</th><th>Клієнт</th><th>Instagram</th><th>Телефон</th><th>Магазин</th><th>Модель</th>
+    <th>Ціна</th><th>Передоплата</th><th>Маржа</th><th>Статус ТТН</th><th>Результат</th><th>Залишок (відмова)</th>
   </tr>
   {% for o in orders %}
   <tr>
     <td>{{ o.date }}</td>
     <td>{{ (o.first_name or "") ~ " " ~ (o.last_name or "") }}</td>
+    <td>
+      {% if o.client_nickname and o.client_nickname == o.client_nickname %}
+        <a class="pagelink" href="https://instagram.com/{{ o.client_nickname }}" target="_blank" rel="noopener">@{{ o.client_nickname }}</a>
+      {% else %}
+        <span class="muted">—</span>
+      {% endif %}
+    </td>
     <td>{{ o.phone }}</td>
     <td>{{ o.shop }}</td>
     <td>{{ o.model }}</td>
     <td>{{ o.cost_price }}</td>
+    <td>
+      {% if o.prepayment == o.prepayment and o.prepayment %}
+        <span class="badge success">{{ "%.0f"|format(o.prepayment) }} ₴</span>
+      {% else %}
+        <span class="badge pending">немає</span>
+      {% endif %}
+    </td>
     <td>{{ o.margin }}</td>
     <td>{{ o.ttn_status }}</td>
     <td><span class="badge {{ o.outcome }}">{{ o.outcome }}</span></td>

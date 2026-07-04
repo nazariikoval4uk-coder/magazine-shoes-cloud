@@ -10,6 +10,14 @@
   {% endfor %}
 </div>
 
+<form class="filters" method="get">
+  {% for s in selected_shops %}<input type="hidden" name="shop" value="{{ s }}">{% endfor %}
+  <input type="hidden" name="period" value="custom">
+  <div><label>Від</label><input type="date" name="date_from" value="{{ date_from }}"></div>
+  <div><label>До</label><input type="date" name="date_to" value="{{ date_to }}"></div>
+  <div><button type="submit">Застосувати діапазон</button></div>
+</form>
+
 <div class="store-grid">
   {% for s in stores %}
   <div class="store-card" style="--store-color:{{ shop_colors.get(s.shop, '#7c7e9a') }}">

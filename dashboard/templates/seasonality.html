@@ -24,11 +24,11 @@
   </tr>
   {% for row in summary %}
   <tr>
-    <td>{{ row.month_name }}</td>
+    <td style="text-transform:capitalize">{{ row.month_name }}</td>
     <td>{{ row.years_covered }}</td>
     <td>{{ row.orders_total }}</td>
-    <td>{{ row.buyout_rate if row.buyout_rate == row.buyout_rate else "—" }}</td>
-    <td class="{{ 'pos' if row.avg_profit_per_year >= 0 else 'neg' }}">{{ "%.0f"|format(row.avg_profit_per_year) }}</td>
+    <td style="background:{{ row.buyout_rate_bg }}; font-weight:700">{{ row.buyout_rate if row.buyout_rate == row.buyout_rate else "—" }}</td>
+    <td style="background:{{ row.avg_profit_bg }}; font-weight:700">{{ "%.0f"|format(row.avg_profit_per_year) }}</td>
   </tr>
   {% endfor %}
 </table>
@@ -38,7 +38,7 @@
   <tr><th>Місяць</th><th>Модель</th><th>Прибуток</th></tr>
   {% for p in top_products %}
   <tr>
-    <td>{{ p.month_name }}</td>
+    <td style="text-transform:capitalize">{{ p.month_name }}</td>
     <td>{{ p.model }}</td>
     <td class="{{ 'pos' if p.total_profit >= 0 else 'neg' }}">{{ "%.0f"|format(p.total_profit) }}</td>
   </tr>

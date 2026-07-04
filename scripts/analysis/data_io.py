@@ -59,6 +59,18 @@ def load_plan() -> pd.DataFrame:
     return df
 
 
+def set_plan(month: str, shop: str, planned_profit: float) -> None:
+    path = DATA_MANUAL / "plan.csv"
+    df = pd.read_csv(path, dtype={"month": str})
+    match = (df["month"] == month) & (df["shop"] == shop)
+    if match.any():
+        df.loc[match, "planned_profit"] = planned_profit
+    else:
+        new_row = pd.DataFrame([{"month": month, "shop": shop, "planned_profit": planned_profit}])
+        df = pd.concat([df, new_row], ignore_index=True)
+    df.to_csv(path, index=False, encoding="utf-8-sig")
+
+
 def append_expense(date: str, shop: str, category: str, amount: float, comment: str) -> None:
     path = DATA_MANUAL / "expenses.csv"
     df = pd.read_csv(path)

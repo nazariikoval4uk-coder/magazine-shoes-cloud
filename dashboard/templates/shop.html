@@ -5,6 +5,18 @@
 <p><a class="pagelink" href="{{ url_for('stores_view') }}">&larr; до всіх магазинів</a> ·
    <a class="pagelink" href="{{ url_for('index') }}">до загального дашборду</a></p>
 
+<div class="pill-row">
+  {% for p, label in [("month","Цей місяць"), ("3m","3 міс"), ("6m","6 міс"), ("year","Цей рік"), ("all","Весь час")] %}
+  <a class="pill {{ 'active' if period == p }}" href="{{ url_for('shop_detail', name=shop, period=p) }}">{{ label }}</a>
+  {% endfor %}
+</div>
+<form class="filters" method="get">
+  <input type="hidden" name="period" value="custom">
+  <div><label>Від</label><input type="date" name="date_from" value="{{ date_from }}"></div>
+  <div><label>До</label><input type="date" name="date_to" value="{{ date_to }}"></div>
+  <div><button type="submit">Застосувати діапазон</button></div>
+</form>
+
 <h2>По місяцях</h2>
 <table>
   <tr><th>Місяць</th><th>Замовлень</th><th>Успішно</th><th>Відмова</th><th>В процесі</th><th>Викуп %</th><th>Прибуток</th></tr>
@@ -12,11 +24,11 @@
   <tr>
     <td>{{ row.month }}</td>
     <td>{{ row.orders_total }}</td>
-    <td>{{ row.orders_success }}</td>
-    <td>{{ row.orders_refused }}</td>
-    <td>{{ row.orders_pending }}</td>
-    <td>{{ row.buyout_rate if row.buyout_rate == row.buyout_rate else "—" }}</td>
-    <td class="{{ 'pos' if row.profit >= 0 else 'neg' }}">{{ "%.0f"|format(row.profit) }}</td>
+    <td style="color:var(--good); font-weight:700">{{ row.orders_success }}</td>
+    <td style="color:var(--bad); font-weight:700">{{ row.orders_refused }}</td>
+    <td style="color:var(--warn); font-weight:700">{{ row.orders_pending }}</td>
+    <td style="color:var(--blue); font-weight:700">{{ row.buyout_rate if row.buyout_rate == row.buyout_rate else "—" }}</td>
+    <td class="{{ 'pos' if row.profit >= 0 else 'neg' }}" style="font-weight:700">{{ "%.0f"|format(row.profit) }}</td>
   </tr>
   {% endfor %}
 </table>
@@ -27,10 +39,10 @@
   {% for p in products %}
   <tr>
     <td>{{ p.model }}</td>
-    <td>{{ p.orders_success }}</td>
-    <td>{{ p.orders_refused }}</td>
-    <td>{{ p.buyout_rate if p.buyout_rate == p.buyout_rate else "—" }}</td>
-    <td class="{{ 'pos' if p.total_profit >= 0 else 'neg' }}">{{ "%.0f"|format(p.total_profit) }}</td>
+    <td style="color:var(--good); font-weight:700">{{ p.orders_success }}</td>
+    <td style="color:var(--bad); font-weight:700">{{ p.orders_refused }}</td>
+    <td style="color:var(--blue); font-weight:700">{{ p.buyout_rate if p.buyout_rate == p.buyout_rate else "—" }}</td>
+    <td class="{{ 'pos' if p.total_profit >= 0 else 'neg' }}" style="font-weight:700">{{ "%.0f"|format(p.total_profit) }}</td>
   </tr>
   {% endfor %}
 </table>

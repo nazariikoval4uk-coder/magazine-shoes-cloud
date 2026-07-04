@@ -12,6 +12,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.analysis.data_io import load_orders  # noqa: E402
+from scripts.analysis.table_format import heat_colors  # noqa: E402
 
 MONTH_NAMES = [
     "січень", "лютий", "березень", "квітень", "травень", "червень",
@@ -38,6 +39,8 @@ def seasonality_summary(orders: pd.DataFrame) -> pd.DataFrame:
     summary["buyout_rate"] = (summary["orders_success"] / decided.replace(0, float("nan")) * 100).round(1)
     summary["avg_profit_per_year"] = (summary["total_profit"] / summary["years_covered"]).round(0)
     summary["month_name"] = summary["calendar_month"].apply(lambda m: MONTH_NAMES[m - 1])
+    summary["buyout_rate_bg"] = heat_colors(summary["buyout_rate"])
+    summary["avg_profit_bg"] = heat_colors(summary["avg_profit_per_year"])
 
     return summary.sort_values("calendar_month")
 

@@ -35,16 +35,16 @@
   </tr>
   {% for row in trend %}
   <tr>
-    <td>{{ row.month }}{% if row.month == latest_month %} <span class="muted">(неповний)</span>{% endif %}</td>
+    <td>{{ row.month_label }}{% if row.month == latest_month %} <span class="muted">(неповний)</span>{% endif %}</td>
     <td>{{ row.orders_total }}</td>
-    <td>{{ row.orders_success }}</td>
-    <td>{{ row.orders_refused }}</td>
-    <td>{{ row.orders_pending }}</td>
-    <td>{{ row.buyout_rate if row.buyout_rate == row.buyout_rate else "—" }}</td>
+    <td style="color:var(--good); font-weight:700">{{ row.orders_success }}</td>
+    <td style="color:var(--bad); font-weight:700">{{ row.orders_refused }}</td>
+    <td style="color:var(--warn); font-weight:700">{{ row.orders_pending }}</td>
+    <td style="background:{{ row.buyout_rate_bg }}; font-weight:700">{{ row.buyout_rate if row.buyout_rate == row.buyout_rate else "—" }}</td>
     <td class="{{ 'pos' if row.buyout_rate_delta > 0 else 'neg' if row.buyout_rate_delta < 0 else '' }}">
       {% if row.buyout_rate_delta == row.buyout_rate_delta %}{{ "%+.1f"|format(row.buyout_rate_delta) }}{% else %}—{% endif %}
     </td>
-    <td class="{{ 'pos' if row.profit >= 0 else 'neg' }}">{{ "%.0f"|format(row.profit) }}</td>
+    <td style="background:{{ row.profit_bg }}; font-weight:700">{{ "%.0f"|format(row.profit) }}</td>
     <td class="{{ 'pos' if row.profit_delta > 0 else 'neg' if row.profit_delta < 0 else '' }}">
       {% if row.profit_delta == row.profit_delta %}{{ "%+.0f"|format(row.profit_delta) }}{% else %}—{% endif %}
     </td>
